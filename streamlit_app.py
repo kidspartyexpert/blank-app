@@ -1,18 +1,12 @@
 import streamlit as st
 import pandas as pd
-import os
-
-port = int(os.environ.get("PORT", 8501))  # fallback to 8501 if PORT not found
-
-# This line is optional – only needed if you want to print for debug
-print(f"Running on port: {port}")
 
 st.set_page_config(page_title="HDB Resale Estimator", layout="centered")
 st.title("🏠 HDB Resale Price Estimator")
 
 @st.cache_data
 def load_hdb_data():
-    df = pd.read_csv("hdb_data.csv")
+    df = pd.read_csv("hdb_data.gz", compression="gzip")
     df.columns = df.columns.str.lower()
     df['street_name'] = df['street_name'].str.upper().str.strip()
     df['block'] = df['block'].astype(str).str.upper().str.strip()
@@ -144,15 +138,5 @@ st.markdown("---")
 st.markdown("### 🧑‍💼 Looking to Sell Your HDB Flat?")
 st.markdown("""
 Save **50% on agent fees** when you work directly with us.  
-Get expert help and a full-service experience — without overpaying.
+Get expert help and a full-service e
 
-👇 *Tap the button below to chat instantly:*
-""")
-whatsapp_cta = "https://wa.me/6593422768?text=Hi%20I%20would%20like%20to%20sell%20my%20HDB%20flat"
-st.markdown(f"""
-<a href="{whatsapp_cta}" target="_blank">
-    <button style="background-color:#25D366;color:white;padding:10px 18px;border:none;border-radius:6px;font-size:15px;cursor:pointer;">
-        💬 Whatsapp Us Now
-    </button>
-</a>
-""", unsafe_allow_html=True)
