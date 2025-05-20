@@ -1,16 +1,27 @@
 import streamlit as st
 import pandas as pd
+import requests
 
 st.set_page_config(page_title="HDB Resale Estimator", layout="centered")
 st.title("🏠 HDB Resale Price Estimator")
 
 @st.cache_data
 def load_hdb_data():
-    df = pd.read_csv("hdb_data.gz", compression="gzip")
-    df.columns = df.columns.str.lower()
+    url = "https://data.gov.sg/api/action/datastore_search"
+    params = {
+        "resource_id": "f1765b54-a209-4718-8d38-a39237f502b3",  # Official HDB resale dataset
+        "limit": 100000
+    }
+    response = requests.get(url, params=params)
+    data = response.json()
+    records = data['result']['records']
+    df = pd.DataFrame(records)
     df['street_name'] = df['street_name'].str.upper().str.strip()
     df['block'] = df['block'].astype(str).str.upper().str.strip()
     df['flat_type'] = df['flat_type'].str.upper().str.strip()
+    df['resale_price'] = pd.to_numeric(df['resale_price'], errors='coerce')
+    df['floor_area_sqm'] = pd.to_numeric(df['floor_area_sqm'], errors='coerce')
+    df['month'] = pd.to_datetime(df['month'], format='%Y-%m', errors='coerce')
     return df
 
 df_hdb = load_hdb_data()
@@ -69,8 +80,6 @@ def categorize_storey(storey):
 def estimate_by_floor_group(df):
     df = df.copy()
     df['floor_group'] = df['storey_range'].apply(categorize_storey)
-    if 'month' in df.columns:
-        df['month'] = pd.to_datetime(df['month'], format='%Y-%m', errors='coerce')
     df = df[df['resale_price'].notnull()]
     df = df.sort_values(by='month', ascending=False)
     df['psf'] = df['resale_price'] / (df['floor_area_sqm'] * 10.7639)
